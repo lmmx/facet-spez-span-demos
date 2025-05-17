@@ -1,5 +1,6 @@
 use core::marker::PhantomData;
 use core::cell::Cell;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum Cooked {}
@@ -8,9 +9,9 @@ pub enum Raw {}
 
 pub type Pos = usize;
 
-// Add the Format trait with an associated type
+// Format trait with an associated type
 trait Format {
-    type SpanType;
+    type SpanType: Debug;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -38,31 +39,25 @@ impl<C> Clone for Span<C> {
 
 impl<C> Copy for Span<C> {}
 
-// The dispatch trait that expects specific implementations
-trait __Dispatch {
-    fn run<F: Format>(self, format: &F, input: &str) -> Span<Cooked>;
+// Wrapper struct for the dispatch mechanism
+struct __Match<T>(Cell<Option<T>>);
+
+// The dispatch trait now takes a generic parameter F
+trait __Dispatch<F: Format> {
+    fn run(self, format: &F, input: &str) -> Span<Cooked>;
 }
 
-// Only implement for specific concrete types, not for generic types
-impl __Dispatch for &__Match<Span<Cooked>> {
-    fn run<F: Format>(self, _format: &F, _input: &str) -> Span<Cooked> {
+// Implement for the generic case
+impl<F: Format> __Dispatch<F> for &__Match<Span<F::SpanType>> {
+    fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
         let s = self.0.take().unwrap();
-        println!("✓ cooked span: {:?}", s);
-        s
-    }
-}
-
-impl __Dispatch for &__Match<Span<Raw>> {
-    fn run<F: Format>(self, _format: &F, _input: &str) -> Span<Cooked> {
-        let s = self.0.take().unwrap();
-        println!("✓ raw span: {:?}", s);
+        println!("Converting generic span from format's associated type: {:?}", s);
+        // Convert generic span to Cooked
         Span::<Cooked>::new(s.start, s.len)
     }
 }
 
-struct __Match<T>(Cell<Option<T>>);
-
-// The macro that will cause the error
+// The macro now correctly handles any type that matches the pattern
 macro_rules! cook_span_dispatch {
     ($format:expr, $span:expr, $input:expr) => {{
         let __tmp = __Match(Cell::new(Some($span)));
@@ -76,19 +71,34 @@ impl Format for JsonFormat {
     type SpanType = Raw;
 }
 
+// Another format with a different SpanType
+struct XmlFormat;
+impl Format for XmlFormat {
+    type SpanType = Cooked;
+}
+
 // A generic function that will use the macro with a generic Format type
 fn process_span<F: Format>(format: &F, span: Span<F::SpanType>, input: &str) -> Span<Cooked> {
-    // This will cause the error because there's no implementation of
-    // run() for &__Match<Span<F::SpanType>>
+    // This now works without error
     let cooked_span = cook_span_dispatch!(format, span, input);
     cooked_span
 }
 
 fn main() {
-    let format = JsonFormat;
-    let span = Span::<Raw>::new(10, 20);
+    // Test with JsonFormat (SpanType = Raw)
+    let json_format = JsonFormat;
+    let raw_span = Span::<Raw>::new(10, 20);
+    let result1 = process_span(&json_format, raw_span, "sample json");
+    println!("Result with JsonFormat: {:?}", result1);
     
-    // This will trigger the error
-    let result = process_span(&format, span, "sample input");
-    println!("Result: {:?}", result);
+    // Test with XmlFormat (SpanType = Cooked)
+    let xml_format = XmlFormat;
+    let cooked_span = Span::<Cooked>::new(30, 40);
+    let result2 = process_span(&xml_format, cooked_span, "sample xml");
+    println!("Result with XmlFormat: {:?}", result2);
+
+    // Test direct conversions
+    let arbitrary_span = Span::<Raw>::new(50, 60);
+    let cooked_arbitrary = cook_span_dispatch!(&json_format, arbitrary_span, "direct conversion");
+    println!("Direct conversion result: {:?}", cooked_arbitrary);
 }
