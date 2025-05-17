@@ -1,4 +1,6 @@
 use core::marker::PhantomData;
+use core::cell::Cell;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub enum Cooked {}
@@ -9,7 +11,7 @@ pub type Pos = usize;
 
 // Format trait with an associated type
 trait Format {
-    type SpanType;
+    type SpanType: 'static + std::fmt::Debug;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -45,55 +47,94 @@ trait ToCooked {
 // Implement for Raw - does a conversion
 impl ToCooked for Span<Raw> {
     fn to_cooked(self) -> Span<Cooked> {
-        println!("SPECIALIZED: Converting from Raw to Cooked span: {:?}", self);
+        println!("TOCOOKED TRAIT: Converting from Raw to Cooked span: {:?}", self);
         Span::<Cooked>::new(self.start, self.len)
     }
 }
 
-// Implement for Cooked - identity function
-impl ToCooked for Span<Cooked> {
-    fn to_cooked(self) -> Span<Cooked> {
-        println!("SPECIALIZED: Already a Cooked span, returning as is: {:?}", self);
-        self // Just return self
+// Wrapper struct for the dispatch mechanism
+struct __Match<T>(Cell<Option<T>>);
+
+// Base dispatch trait for the specialization
+trait __Dispatch<F: Format> {
+    fn run(self, format: &F, input: &str) -> Span<Cooked>;
+}
+
+// Specialized implementation for spans that implement ToCooked (medium priority)
+impl<F: Format> __Dispatch<F> for &__Match<Span<F::SpanType>> 
+where
+    F::SpanType: 'static,
+    Span<F::SpanType>: ToCooked,
+{
+    fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
+        let s = self.0.take().unwrap();
+        println!("MEDIUM PRIORITY: Converting span with ToCooked trait: {:?}", s);
+        println!("  Type: {}", std::any::type_name::<F::SpanType>());
+        // Use the ToCooked trait implementation
+        s.to_cooked()
     }
+}
+
+// Generic fallback implementation (lowest priority)
+impl<F: Format> __Dispatch<F> for &&__Match<Span<F::SpanType>> 
+where
+    F::SpanType: 'static,
+{
+    fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
+        let s = self.0.take().unwrap();
+        println!("LOW PRIORITY: Generic fallback conversion: {:?}", s);
+        println!("  Type: {}", std::any::type_name::<F::SpanType>());
+        // Default conversion
+        Span::<Cooked>::new(s.start, s.len)
+    }
+}
+
+// The macro with the correct reference depth
+macro_rules! cook_span_dispatch {
+    ($format:expr, $span:expr, $input:expr) => {{
+        let __tmp = __Match(Cell::new(Some($span)));
+        // Try with the lowest reference depth first (highest priority)
+        (&__tmp).run($format, $input)
+    }};
 }
 
 // A concrete format implementation
 struct CliFormat;
 impl Format for CliFormat {
-    type SpanType = Raw;
+    type SpanType = Raw; // Implements ToCooked
 }
 
 // Another format with a different SpanType
 struct JsonFormat;
 impl Format for JsonFormat {
-    type SpanType = Cooked;
+    type SpanType = Cooked; // Doesn't implement ToCooked
 }
 
-// A generic function that uses the trait approach
-fn process_span<F: Format>(_format: &F, span: Span<F::SpanType>, _input: &str) -> Span<Cooked> 
+// A generic function that will use the macro with a generic Format type
+fn process_span<F: Format>(format: &F, span: Span<F::SpanType>, input: &str) -> Span<Cooked> 
 where
-    Span<F::SpanType>: ToCooked, // This ensures span.to_cooked() is available
+    F::SpanType: 'static,
 {
     println!("In process_span with F::SpanType = {}", std::any::type_name::<F::SpanType>());
-    let cooked = span.to_cooked();
-    cooked
+    
+    let cooked_span = cook_span_dispatch!(format, span, input);
+    cooked_span
 }
 
 fn main() {
-    // Test with CliFormat (SpanType = Raw)
+    // Test with CliFormat (SpanType = Raw, has ToCooked impl)
     let cli_format = CliFormat;
     let raw_cli_span = Span::<Raw>::new(10, 20);
-    println!("=== Test 1: CliFormat with Raw span ===");
-    let result1 = process_span(&cli_format, raw_cli_span, "sample cli 1");
-    println!("Result with CliFormat (raw): {:?}", result1);
+    println!("=== Test 1: CliFormat with Raw span (has ToCooked impl) ===");
+    let result1 = process_span(&cli_format, raw_cli_span, "sample cli");
+    println!("Result: {:?}", result1);
 
     println!("");
-
-    // Test with JsonFormat (SpanType = Cooked)
+    
+    // Test with JsonFormat (SpanType = Cooked, special case)
     let json_format = JsonFormat;
-    let cooked_json_span = Span::<Cooked>::new(50, 60);
-    println!("=== Test 2: JsonFormat with Cooked span ===");
-    let result2 = process_span(&json_format, cooked_json_span, "sample json 2");
-    println!("Result with JsonFormat (cooked): {:?}", result2);
+    let cooked_json_span = Span::<Cooked>::new(30, 40);
+    println!("=== Test 2: JsonFormat with Cooked span (special case) ===");
+    let result2 = process_span(&json_format, cooked_json_span, "sample json");
+    println!("Result: {:?}", result2);
 }

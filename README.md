@@ -96,6 +96,8 @@ Shows that you cannot actually monomorphise on an associated type... Back to the
 
 ## v9
 
+- Note: the specialisation approach was dropped here. This is purely using traits.
+
 Taking into account that the whole point here is to specialise on **traits** and their bounds rather
 than **types**, so the way to specialise on an associated type is to differentiate those associated
 types based on their implementations. In this example though, there is no monomorphisation, the
@@ -106,6 +108,13 @@ those whose SpanType is already Cooked. This design simply always calls the trai
 seems a bit redundant (besides being the machinery to call the trait implementation).
 
 Nevertheless, it works!
+
+## v10
+
+Now it's time to bring back the specialisation macro approach, and only implement the `ToCooked` trait for
+the formats whose SpanType is not already Cooked.
+
+- Does not work: cannot specialise on the associated type
 
 ## Key Concepts
 
