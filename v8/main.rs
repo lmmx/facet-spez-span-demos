@@ -72,6 +72,10 @@ impl<F: Format> __Dispatch<F> for &__Match<Span<F::SpanType>> {
     fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
         let s = self.0.take().unwrap();
         println!("GENERIC: Converting generic span: {:?}", s);
+        
+        // Peek into F::SpanType using type_name
+        println!("  Generic span type: {}", std::any::type_name::<F::SpanType>());
+        
         Span::<Cooked>::new(s.start, s.len)
     }
 }
@@ -99,6 +103,9 @@ impl Format for JsonFormat {
 
 // A generic function that will use the macro with a generic Format type
 fn process_span<F: Format>(format: &F, span: Span<F::SpanType>, input: &str) -> Span<Cooked> {
+    // Peek at F::SpanType here with minimal change
+    println!("In process_span, F::SpanType = {}", std::any::type_name::<F::SpanType>());
+    
     let cooked_span = cook_span_dispatch!(format, span, input);
     cooked_span
 }
@@ -107,22 +114,25 @@ fn main() {
     // Test with CliFormat (SpanType = Raw)
     let cli_format = CliFormat;
     let raw_cli_span = Span::<Raw>::new(10, 20);
+    println!("=== Test 1: CliFormat with Raw span ===");
     let result1 = process_span(&cli_format, raw_cli_span, "sample cli 1");
     println!("Result with CliFormat (raw): {:?}", result1);
 
     println!("");
 
-    // Test with CliFormat (SpanType = Raw)
-    let cli_format = CliFormat;
-    let cooked_cli_span = Span::<Raw>::new(10, 20);
-    let result2 = process_span(&cli_format, cooked_cli_span, "sample cli 2");
-    println!("Result with CliFormat (cooked): {:?}", result2);
+    // // Test with CliFormat using Cooked span
+    // let cli_format = CliFormat;
+    // let cooked_span = Span::<Cooked>::new(30, 40);
+    // println!("=== Test 2: CliFormat with Cooked span ===");
+    // let result2 = process_span(&cli_format, cooked_span, "sample cli 2");
+    // println!("Result with CliFormat (cooked): {:?}", result2);
 
     println!("");
     
     // Test with JsonFormat (SpanType = Cooked)
     let json_format = JsonFormat;
-    let cooked_json_span = Span::<Cooked>::new(30, 40);
+    let cooked_json_span = Span::<Cooked>::new(50, 60);
+    println!("=== Test 2: JsonFormat with Cooked span ===");
     let result3 = process_span(&json_format, cooked_json_span, "sample json 3");
     println!("Result with JsonFormat (cooked): {:?}", result3);
 }
