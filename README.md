@@ -92,7 +92,16 @@ Shows that you cannot actually monomorphise on an associated type... Back to the
 
 ## v9
 
-WIP...
+Taking into account that the whole point here is to specialise on **traits** and their bounds rather
+than **types**, so the way to specialise on an associated type is to differentiate those associated
+types based on their implementations. In this example though, there is no monomorphisation, the
+trait is simply implemented for all format span types.
+
+A better design would be to only implement ToCooked for those that needed it, and not require it for
+those whose SpanType is already Cooked. This design simply always calls the trait, so the match
+seems a bit redundant (besides being the machinery to call the trait implementation).
+
+Nevertheless, it works!
 
 ## Key Concepts
 
