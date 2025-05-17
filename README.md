@@ -6,7 +6,6 @@ in Rust, with increasing levels of sophistication.
 
 Initial example uses the `spez!` macro (from the spez crate), and then switches to `facet-core::spez::Spez`.
 
-
 ## Overview
 
 The demos show how to handle span conversions using different techniques:
@@ -15,6 +14,8 @@ The demos show how to handle span conversions using different techniques:
 - **v3**: Using the `spez!` macro for type-based dispatch
 - **v4**: Using `facet-core::spez::Spez` for trait-based dispatch
 - **v5**: Extended version of v4 that returns converted spans
+
+Their outputs are in the subfolders as READMEs
 
 ## v1: Basic Trait Implementation
 
