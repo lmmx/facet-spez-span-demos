@@ -86,14 +86,14 @@ macro_rules! cook_span_dispatch {
 }
 
 // A concrete format implementation
-struct JsonFormat;
-impl Format for JsonFormat {
+struct CliFormat;
+impl Format for CliFormat {
     type SpanType = Raw;
 }
 
 // Another format with a different SpanType
-struct XmlFormat;
-impl Format for XmlFormat {
+struct JsonFormat;
+impl Format for JsonFormat {
     type SpanType = Cooked;
 }
 
@@ -104,24 +104,24 @@ fn process_span<F: Format>(format: &F, span: Span<F::SpanType>, input: &str) -> 
 }
 
 fn main() {
-    // Test with JsonFormat (SpanType = Raw)
-    let json_format = JsonFormat;
+    // Test with CliFormat (SpanType = Raw)
+    let cli_format = CliFormat;
     let raw_span = Span::<Raw>::new(10, 20);
-    let result1 = process_span(&json_format, raw_span, "sample json");
-    println!("Result with JsonFormat: {:?}", result1);
+    let result1 = process_span(&cli_format, raw_span, "sample cli");
+    println!("Result with CliFormat: {:?}", result1);
     
-    // Test with XmlFormat (SpanType = Cooked)
-    let xml_format = XmlFormat;
+    // Test with JsonFormat (SpanType = Cooked)
+    let json_format = JsonFormat;
     let cooked_span = Span::<Cooked>::new(30, 40);
-    let result2 = process_span(&xml_format, cooked_span, "sample xml");
-    println!("Result with XmlFormat: {:?}", result2);
+    let result2 = process_span(&json_format, cooked_span, "sample json");
+    println!("Result with JsonFormat: {:?}", result2);
 
     // Test direct specialization
     let cooked_direct = Span::<Cooked>::new(50, 60);
-    let cooked_result = cook_span_dispatch!(&json_format, cooked_direct, "direct cooked");
+    let cooked_result = cook_span_dispatch!(&cli_format, cooked_direct, "direct cooked");
     println!("Direct cooked result: {:?}", cooked_result);
     
     let raw_direct = Span::<Raw>::new(70, 80);
-    let raw_result = cook_span_dispatch!(&json_format, raw_direct, "direct raw");
+    let raw_result = cook_span_dispatch!(&cli_format, raw_direct, "direct raw");
     println!("Direct raw result: {:?}", raw_result);
 }
