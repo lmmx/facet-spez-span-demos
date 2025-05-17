@@ -63,6 +63,10 @@ The final version extends v4 to return the converted spans:
 This version shows how to use the dispatch mechanism not just for side effects but
 to transform values based on their type.
 
+## v6
+
+This is a repro of the error you get when you pass an associated type.
+
 ## Running the Examples
 
 Each example can be run with `rust-script`:
