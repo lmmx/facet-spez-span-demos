@@ -88,9 +88,11 @@ terminology: the value in an associated type is concrete, it's just stored on th
 
 ## v8
 
-Shows that using an extra layer of `&` indirection allows you to access what's inside the associated
-type and specialise on it! This means that you can still dispatch differently even if it's on an
-associated type.
+Shows that you cannot actually monomorphise on an associated type... Back to the drawing board.
+
+## v9
+
+WIP...
 
 ## Key Concepts
 
