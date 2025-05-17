@@ -42,26 +42,46 @@ impl<C> Copy for Span<C> {}
 // Wrapper struct for the dispatch mechanism
 struct __Match<T>(Cell<Option<T>>);
 
-// The dispatch trait now takes a generic parameter F
+// Base dispatch trait for the specialization
 trait __Dispatch<F: Format> {
     fn run(self, format: &F, input: &str) -> Span<Cooked>;
 }
 
-// Implement for the generic case
-impl<F: Format> __Dispatch<F> for &__Match<Span<F::SpanType>> {
+// This is the specialized implementation for Cooked
+// Note the additional reference (&) which makes this more specific
+impl<F: Format> __Dispatch<F> for &&__Match<Span<Cooked>> {
     fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
         let s = self.0.take().unwrap();
-        println!("Converting generic span from format's associated type: {:?}", s);
-        // Convert generic span to Cooked
+        println!("SPECIALIZED: Using already cooked span: {:?}", s);
+        s
+    }
+}
+
+// This is the specialized implementation for Raw
+// Again, note the additional reference
+impl<F: Format> __Dispatch<F> for &&__Match<Span<Raw>> {
+    fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
+        let s = self.0.take().unwrap();
+        println!("SPECIALIZED: Converting raw span: {:?}", s);
         Span::<Cooked>::new(s.start, s.len)
     }
 }
 
-// The macro now correctly handles any type that matches the pattern
+// This is the fallback generic implementation with one less &
+impl<F: Format> __Dispatch<F> for &__Match<Span<F::SpanType>> {
+    fn run(self, _format: &F, _input: &str) -> Span<Cooked> {
+        let s = self.0.take().unwrap();
+        println!("GENERIC: Converting generic span: {:?}", s);
+        Span::<Cooked>::new(s.start, s.len)
+    }
+}
+
+// The macro now uses double borrowing for specialization
 macro_rules! cook_span_dispatch {
     ($format:expr, $span:expr, $input:expr) => {{
         let __tmp = __Match(Cell::new(Some($span)));
-        (&__tmp).run($format, $input)
+        // Two levels of borrowing for specialization to kick in
+        (&&__tmp).run($format, $input)
     }};
 }
 
@@ -79,7 +99,6 @@ impl Format for XmlFormat {
 
 // A generic function that will use the macro with a generic Format type
 fn process_span<F: Format>(format: &F, span: Span<F::SpanType>, input: &str) -> Span<Cooked> {
-    // This now works without error
     let cooked_span = cook_span_dispatch!(format, span, input);
     cooked_span
 }
@@ -97,8 +116,12 @@ fn main() {
     let result2 = process_span(&xml_format, cooked_span, "sample xml");
     println!("Result with XmlFormat: {:?}", result2);
 
-    // Test direct conversions
-    let arbitrary_span = Span::<Raw>::new(50, 60);
-    let cooked_arbitrary = cook_span_dispatch!(&json_format, arbitrary_span, "direct conversion");
-    println!("Direct conversion result: {:?}", cooked_arbitrary);
+    // Test direct specialization
+    let cooked_direct = Span::<Cooked>::new(50, 60);
+    let cooked_result = cook_span_dispatch!(&json_format, cooked_direct, "direct cooked");
+    println!("Direct cooked result: {:?}", cooked_result);
+    
+    let raw_direct = Span::<Raw>::new(70, 80);
+    let raw_result = cook_span_dispatch!(&json_format, raw_direct, "direct raw");
+    println!("Direct raw result: {:?}", raw_result);
 }
