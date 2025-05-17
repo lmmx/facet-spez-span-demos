@@ -94,7 +94,7 @@ terminology: the value in an associated type is concrete, it's just stored on th
 
 Shows that you cannot actually monomorphise on an associated type... Back to the drawing board.
 
-## v9
+## v9 :tada:
 
 - Note: the specialisation approach was dropped here. This is purely using traits.
 
@@ -115,6 +115,14 @@ Now it's time to bring back the specialisation macro approach, and only implemen
 the formats whose SpanType is not already Cooked.
 
 - Does not work: cannot specialise on the associated type
+
+## v11 :tada:
+
+Now we implement a ToCooked trait **parameterised by a Format** for the cases of SpanType = Raw and
+SpanType = Cooked. This is sort of like a registry pattern for formats.
+
+It **allows us the ideal design of not implementing ToCooked per format** but instead implementing
+it on `SpanType = Cooked` (just returning `self` but satisfying the type checker) :tada:
 
 ## Key Concepts
 
