@@ -81,6 +81,17 @@ rust-script main.rs
 # etc.
 ```
 
+## v7
+
+Shows that you can capture the 'generic' case of an associated type (this may not be quite right
+terminology: the value in an associated type is concrete, it's just stored on the associated type?)
+
+## v8
+
+Shows that using an extra layer of `&` indirection allows you to access what's inside the associated
+type and specialise on it! This means that you can still dispatch differently even if it's on an
+associated type.
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
