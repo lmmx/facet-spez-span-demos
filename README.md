@@ -28,6 +28,10 @@ The first version demonstrates a fundamental approach with:
 
 This approach uses classical Rust traits but requires explicit handling of format types.
 
+## v2
+
+(Skip)
+
 ## v3: spez! Macro Dispatch
 
 Version 3 introduces the `spez!` macro for type-based dispatch:
