@@ -165,6 +165,12 @@ This really illustrates the design choices, or the bind (and why v11 is a better
     might share the same processing.
   - "Raw" vs. "Cooked" is not a very informative name: "Words" vs. "Chars" might be a better one).
 
+## v13
+
+Looking at v11 again, I lastly was wondering could it be simplified: do we even need the matching?
+It looks like we had replaced the matching with a single arm, so maybe we didn't need specialisation
+in the same way (it'd been solved without it). **Answer: no**
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
