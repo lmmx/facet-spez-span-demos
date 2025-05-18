@@ -173,6 +173,40 @@ in the same way (it'd been solved without it). **Answer: no**
 
 Same functionality as the v11 with 1/3 fewer lines (150 -> 100 LOC).
 
+## v14
+
+The same as v13 but can importantly this version be called even if already cooked.
+
+We remove the impl that matches on SpanType = Cooked
+
+```rust
+// // Implement for any format where SpanType = Cooked
+// impl<F: Format<SpanType = Cooked>> ToCooked<F> for Span<Cooked> {
+//     fn to_cooked(self, _format: &F) -> Span<Cooked> {
+//         println!("SPECIALIZED: Already Cooked for format: {}", std::any::type_name::<F>());
+//         self
+//     }
+```
+
+We change to
+
+```rust
+// Implement for any format where SpanType = Raw
+impl<F: Format> ToCooked<F> for Span<Cooked> {
+    #[inline]
+    fn to_cooked(self, _format: &F) -> Span<Cooked> { self }
+}
+
+// Unchanged
+impl<F: Format<SpanType = Raw>> ToCooked<F> for Span<Raw> {
+    #[inline]
+    fn to_cooked(self, _format: &F) -> Span<Cooked> {
+        println!("SPECIALIZED: Raw to Cooked conversion for format: {}", std::any::type_name::<F>());
+        Span::<Cooked>::new(self.start, self.len)
+    }
+}
+```
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
