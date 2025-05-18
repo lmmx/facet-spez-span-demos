@@ -124,6 +124,21 @@ SpanType = Cooked. This is sort of like a registry pattern for formats.
 It **allows us the ideal design of not implementing ToCooked per format** but instead implementing
 it on `SpanType = Cooked` (just returning `self` but satisfying the type checker) :tada:
 
+**Summary**
+
+11th! 🎉 Associated-type matching is served
+
+Given a Format trait, on each format you associate a type {Raw|Cooked}
+
+```rust
+impl<F: Format<SpanType = Cooked>> ToCooked<F> for Span<Cooked> {
+  fn to_cooked() -> Span<Cooked> { self }
+}
+```
+
+- Parameterising by F is the trick to make it work
+- Avoids requiring all formats to define a `to_cooked` method
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
