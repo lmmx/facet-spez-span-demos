@@ -139,6 +139,32 @@ impl<F: Format<SpanType = Cooked>> ToCooked<F> for Span<Cooked> {
 - Parameterising by F is the trick to make it work
 - Avoids requiring all formats to define a `to_cooked` method
 
+## v12
+
+The obvious next question: can you specify a different `to_cooked` or will you need to share the
+same method across all sharing a given SpanType in this scenario (can different formats specify
+their own `ToCooked` methods)?
+
+If so, can they do it via overriding a default method, or would they need to have a helper method
+shared across all formats of that SpanType (e.g. `format.convert_span()`)? It would be ideal if you
+didn't *have* to specify it, but could override a default one.
+
+This really illustrates the design choices, or the bind (and why v11 is a better one):
+
+- You can do it like this **but** the cooked formats will need to specify a redundant `cook_span`
+  method
+- Better to do it like v11 and instead of having different formats using their own conversion
+  functions to change the span index coordinate system, have different **span types** have an
+  associated conversion function defined in the trait impl for `ToCooked` for that `F<SpanType = ...>`
+  - It's the better choice essentially if you can enumerate a finite number of ways you'll want to
+    transform it (and that's the whole point of associating the SpanType to the Format in this case)
+  - It would not be the better choice if you **didn't** have a no-op case that you expected to be
+    common (in our case, many spans will be cooked because they will be operating on bytes, e.g.
+    JSON's tokeniser will maintain a byte index as it steps through the JSON byte stream. For CLI
+    args and other `&[&str]` formats though, they will form categories where different situations
+    might share the same processing.
+  - "Raw" vs. "Cooked" is not a very informative name: "Words" vs. "Chars" might be a better one).
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
