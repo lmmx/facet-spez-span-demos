@@ -171,6 +171,8 @@ Looking at v11 again, I lastly was wondering could it be simplified: do we even 
 It looks like we had replaced the matching with a single arm, so maybe we didn't need specialisation
 in the same way (it'd been solved without it). **Answer: no**
 
+Same functionality as the v11 with 1/3 fewer lines (150 -> 100 LOC).
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
