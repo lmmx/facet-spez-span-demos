@@ -4,7 +4,7 @@ This repository demonstrates different approaches to implementing and converting
 coordinate systems (represented by two generic types `Span::<Raw>` and `Span::<Cooked>`)
 in Rust, with increasing levels of sophistication.
 
-Initial example uses the `spez!` macro (from the spez crate), and then switches to `facet-core::spez::Spez`.
+Initial example uses the `spez!` macro (from the spez crate), and then switches to `facet-core::spez::Spez`, and then removes them entirely in favour of careful use of trait bounds.
 
 ## Overview
 
