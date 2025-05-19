@@ -244,35 +244,7 @@ format, meaning it gets some extra lifetimes involved.
    <span style='opacity:0.67'>78 </span>
    <span style='opacity:0.67'>79 </span><span style='color:var(--bright-blue,#55f)'><i>// JSON Format implementation</i></span>
    <span style='opacity:0.67'>80 </span><b>struct</b> <b>JsonFormat</b>;
-
-<b>main.rs</b><span style='opacity:0.67'> --- 3/4 --- Rust</span>
-<span style='opacity:0.67'>116 </span>   
-<span style='opacity:0.67'>117 </span>   <b>fn</b> main() {
-<span style='opacity:0.67'>118 </span>       <span style='color:var(--bright-blue,#55f)'><i>// Test with CliFormat (SpanType = Raw)</i></span>
-<span style='opacity:0.67'>119 </span>       <b>let</b> cli_format = <b>CliFormat</b>;
-<span style='color:var(--bright-red,#f55)'><b>120 </b></span>       <b>let</b> <span style='color:var(--bright-red,#f55)'>cli_input</span> = <span style='color:var(--bright-red,#f55)'>vec!</span>[<span style='color:var(--bright-magenta,#f5f)'>&quot;--foo&quot;</span><span style='color:var(--bright-red,#f55)'>.to_string</span><span style='color:var(--bright-red,#f55)'><b>()</b></span>, <span style='color:var(--bright-magenta,#f5f)'>&quot;bar&quot;</span><span style='color:var(--bright-red,#f55)'>.to_string</span><span style='color:var(--bright-red,#f55)'><b>()</b></span>];
-   <span style='color:var(--bright-green,#5f5)'><b>120 </b></span>    <b>let</b> <span style='color:var(--bright-green,#5f5)'>cli_args</span> = [<span style='color:var(--bright-magenta,#f5f)'>&quot;--foo&quot;</span>, <span style='color:var(--bright-magenta,#f5f)'>&quot;bar&quot;</span>];
-   <span style='color:var(--bright-green,#5f5)'><b>121 </b></span>    <span style='color:var(--bright-green,#5f5)'><b>let</b></span> <span style='color:var(--bright-green,#5f5)'>cli_input</span> <span style='color:var(--bright-green,#5f5)'>=</span> <span style='color:var(--bright-green,#5f5)'><b>&amp;</b></span><span style='color:var(--bright-green,#5f5)'>cli_args</span><span style='color:var(--bright-green,#5f5)'><b>[</b></span><span style='color:var(--bright-green,#5f5)'>..</span><span style='color:var(--bright-green,#5f5)'><b>]</b></span><span style='color:var(--bright-green,#5f5)'>;</span>
-   <span style='opacity:0.67'>122 </span>    <b>let</b> raw_span = <b>Span</b>::&lt;<b>Raw</b>&gt;::new(<b>1</b>, <b>1</b>); <span style='color:var(--bright-blue,#55f)'><i>// Second arg (index 1), length 1 in raw terms</i></span>
-   <span style='opacity:0.67'>123 </span>
-   <span style='opacity:0.67'>124 </span>    println!(<span style='color:var(--bright-magenta,#f5f)'>&quot;=== Test 1: CliFormat with Raw span ===&quot;</span>);
-   <span style='opacity:0.67'>125 </span>    println!(<span style='color:var(--bright-magenta,#f5f)'>&quot;Input: {:?}&quot;</span>, cli_input);
-
-<b>main.rs</b><span style='opacity:0.67'> --- 4/4 --- Rust</span>
-<span style='opacity:0.67'>126 </span>       
-<span style='opacity:0.67'>127 </span>       <b>let</b> result1 = process_span(<b>&amp;</b>cli_format, raw_span, <b>&amp;</b>cli_input);
-<span style='opacity:0.67'>128 </span>       println!(<span style='color:var(--bright-magenta,#f5f)'>&quot;Cooked span: {:?}&quot;</span>, result1);
-<span style='color:var(--bright-red,#f55)'><b>129 </b></span>       <b>let</b> <span style='color:var(--bright-red,#f55)'>cli_string_owned</span> = <span style='color:var(--bright-red,#f55)'>cli_input</span>.join(<span style='color:var(--bright-magenta,#f5f)'>&quot; &quot;</span>);
-<span style='color:var(--bright-red,#f55)'><b>130 </b></span>       <span style='color:var(--bright-red,#f55)'><b>let</b></span> <span style='color:var(--bright-red,#f55)'>cli_string</span> <span style='color:var(--bright-red,#f55)'>=</span> <span style='color:var(--bright-red,#f55)'>cli_string_owned.as_bytes</span><span style='color:var(--bright-red,#f55)'><b>()</b></span><span style='color:var(--bright-red,#f55)'>;</span>
-   <span style='color:var(--bright-green,#5f5)'><b>131 </b></span>    <span style='color:var(--bright-green,#5f5)'><i>// For visualization, we need to join the slices</i></span>
-   <span style='color:var(--bright-green,#5f5)'><b>132 </b></span>    <span style='color:var(--bright-green,#5f5)'><i>// But join() doesn&#39;t work directly on &amp;[&amp;str], so we&#39;ll manually create the string</i></span>
-   <span style='color:var(--bright-green,#5f5)'><b>133 </b></span>    <b>let</b> <span style='color:var(--bright-green,#5f5)'>cli_string</span> = <span style='color:var(--bright-green,#5f5)'>cli_args</span>.join(<span style='color:var(--bright-magenta,#f5f)'>&quot; &quot;</span>);
-   <span style='color:var(--bright-green,#5f5)'><b>134 </b></span>    visualize_span(cli_string<span style='color:var(--bright-green,#5f5)'>.as_bytes</span><span style='color:var(--bright-green,#5f5)'><b>()</b></span>, <b>&amp;</b>result1);
-   <span style='opacity:0.67'>135 </span>
-   <span style='opacity:0.67'>136 </span>    println!(<span style='color:var(--bright-magenta,#f5f)'>&quot;&quot;</span>);
-   <span style='opacity:0.67'>137 </span>
-   <span style='opacity:0.67'>138 </span>    <span style='color:var(--bright-blue,#55f)'><i>// Test with JsonFormat (SpanType = Cooked)</i></span>
-
+...
 <span class='shell'>&gt; </span><span class='caret'> </span>
 </pre>
 
