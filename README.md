@@ -207,6 +207,11 @@ impl<F: Format<SpanType = Raw>> ToCooked<F> for Span<Raw> {
 }
 ```
 
+## v15
+
+This time we introduce the real motivation and supply input to the function too, allowing us to
+print out spans against the original input (turning raw spans into "cooked" ones for diagnostics).
+
 ## Key Concepts
 
 - **PhantomData**: Used to carry type information without runtime cost
