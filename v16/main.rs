@@ -11,7 +11,7 @@ pub type Pos = usize;
 // Format trait with associated input and span types
 trait Format {
     type SpanType: Debug + 'static;
-    type Input<'a>: ?Sized;
+    type Input<'input>: ?Sized;
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -58,8 +58,8 @@ impl<'input, F: Format<SpanType = Raw, Input<'input> = [&'input str]>> ToCooked<
 
         // Calculate start position by summing lengths of preceding args plus spaces
         let mut start = 0;
-        for i in 0..self.start {
-            start += input[i].len() + 1; // +1 for space between args
+        for arg in input.iter().take(self.start) {
+            start += arg.len() + 1; // +1 for space between args
         }
 
         // Length is the length of the current arg
@@ -73,14 +73,14 @@ impl<'input, F: Format<SpanType = Raw, Input<'input> = [&'input str]>> ToCooked<
 struct CliFormat;
 impl Format for CliFormat {
     type SpanType = Raw;
-    type Input<'a> = [&'a str];
+    type Input<'input> = [&'input str];
 }
 
 // JSON Format implementation
 struct JsonFormat;
 impl Format for JsonFormat {
     type SpanType = Cooked;
-    type Input<'a> = [u8];
+    type Input<'input> = [u8];
 }
 
 // A generic function that uses the ToCooked trait with input
@@ -125,7 +125,7 @@ fn main() {
     println!("Input: {:?}", cli_input);
     println!("Raw span: {:?}", raw_span);
 
-    let result1 = process_span(&cli_format, raw_span, &cli_input);
+    let result1 = process_span(&cli_format, raw_span, cli_input);
     println!("Cooked span: {:?}", result1);
 
     // For visualization, we need to join the slices
@@ -133,7 +133,7 @@ fn main() {
     let cli_string = cli_args.join(" ");
     visualize_span(cli_string.as_bytes(), &result1);
 
-    println!("");
+    println!();
 
     // Test with JsonFormat (SpanType = Cooked)
     let json_format = JsonFormat;
