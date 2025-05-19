@@ -238,6 +238,106 @@ format, meaning it gets some extra lifetimes involved.
 <span class='shell'>&gt; </span><span class='caret'> </span>
 </pre>
 
+The final result looks like this:
+
+```rust
+use core::marker::PhantomData;
+use std::fmt::Debug;
+
+#[derive(Debug)]
+pub enum Cooked {}
+#[derive(Debug)]
+pub enum Raw {}
+
+pub type Pos = usize;
+
+// Format trait with associated input and span types
+trait Format {
+    type SpanType: Debug + 'static;
+    type Input<'input>: ?Sized;
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Span<C = Cooked> {
+    pub start: Pos,
+    pub len: usize,
+    _p: PhantomData<C>,
+}
+
+impl<C> Span<C> {
+    pub fn new(start: Pos, len: usize) -> Self {
+        Self {
+            start,
+            len,
+            _p: PhantomData,
+        }
+    }
+}
+
+impl<C> Clone for Span<C> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<C> Copy for Span<C> {}
+
+// The key trait for conversion, now parameterized by Format and input
+trait ToCooked<'input, F: Format> {
+    fn to_cooked(self, format: &F, input: &'input F::Input<'input>) -> Span<Cooked>;
+}
+
+impl<'input, F: Format> ToCooked<'input, F> for Span<Cooked> {
+    #[inline]
+    fn to_cooked(self, _format: &F, _input: &'input F::Input<'input>) -> Span<Cooked> {
+        self
+    }
+}
+
+impl<'input, F: Format<SpanType = Raw, Input<'input> = [&'input str]>> ToCooked<'input, F> for Span<Raw> {
+    #[inline]
+    fn to_cooked(self, _format: &F, input: &'input [&'input str]) -> Span<Cooked> {
+        println!("SPECIALIZED: Raw to Cooked conversion for CLI format");
+
+        // Calculate start position by summing lengths of preceding args plus spaces
+        let mut start = 0;
+        for arg in input.iter().take(self.start) {
+            start += arg.len() + 1; // +1 for space between args
+        }
+
+        // Length is the length of the current arg
+        let len = input[self.start].len();
+
+        Span::<Cooked>::new(start, len)
+    }
+}
+
+// CLI Format implementation
+struct CliFormat;
+impl Format for CliFormat {
+    type SpanType = Raw;
+    type Input<'input> = [&'input str];
+}
+
+// JSON Format implementation
+struct JsonFormat;
+impl Format for JsonFormat {
+    type SpanType = Cooked;
+    type Input<'input> = [u8];
+}
+
+// A generic function that uses the ToCooked trait with input
+fn process_span<'input, F: Format>(
+    format: &F,
+    span: Span<F::SpanType>,
+    input: &'input F::Input<'input>
+) -> Span<Cooked>
+where
+    Span<F::SpanType>: ToCooked<'input, F>,
+{
+    span.to_cooked(format, input)
+}
+```
 
 ## Key Concepts
 
