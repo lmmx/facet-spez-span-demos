@@ -242,7 +242,7 @@ The final result looks like this:
 
 ```rust
 use core::marker::PhantomData;
-use std::fmt::Debug;
+use core::fmt::Debug;
 
 #[derive(Debug)]
 pub enum Cooked {}
